@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 
-const API_URL = "https://taskflow-backend-wllt.onrender.com/api/tasks";
+const API_URL = "https://taskflow-backend-wllt.onrender.com";
 
 function App() {
   const [tasks, setTasks] = useState([]);
