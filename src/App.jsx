@@ -1,29 +1,11 @@
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 
 const initialTasks = [
-  {
-    id: 1,
-    title: "Complete React project",
-    category: "Development",
-    priority: "High",
-    done: false,
-  },
-  {
-    id: 2,
-    title: "Practice Java coding",
-    category: "Learning",
-    priority: "High",
-    done: false,
-  },
-  {
-    id: 3,
-    title: "Review project documentation",
-    category: "Planning",
-    priority: "Medium",
-    done: true,
-  },
+  { id: 1, title: "Complete Java practice", category: "Learning", priority: "High", completed: false },
+  { id: 2, title: "Update portfolio website", category: "Personal", priority: "Medium", completed: false },
+  { id: 3, title: "Review project documentation", category: "Work", priority: "Low", completed: true },
 ];
 
 function App() {
@@ -36,52 +18,35 @@ function App() {
     }
   });
 
-  const [darkMode, setDarkMode] = useState(() => {
-    try {
-      return localStorage.getItem("taskflow-theme") === "dark";
-    } catch {
-      return false;
-    }
-  });
-
-  const [filter, setFilter] = useState("All Tasks");
-  const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All");
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("Development");
+  const [category, setCategory] = useState("Work");
   const [priority, setPriority] = useState("Medium");
 
   useEffect(() => {
     localStorage.setItem("taskflow-tasks", JSON.stringify(tasks));
   }, [tasks]);
 
-  useEffect(() => {
-    document.documentElement.dataset.theme = darkMode ? "dark" : "light";
+  const completedCount = tasks.filter((task) => task.completed).length;
+  const pendingCount = tasks.length - completedCount;
 
-    try {
-      localStorage.setItem("taskflow-theme", darkMode ? "dark" : "light");
-    } catch {
-      // The theme still works if browser storage is unavailable.
-    }
-  }, [darkMode]);
+  const filteredTasks = tasks.filter((task) => {
+    const matchesSearch =
+      task.title.toLowerCase().includes(search.toLowerCase()) ||
+      task.category.toLowerCase().includes(search.toLowerCase());
 
-  const completed = tasks.filter((task) => task.done).length;
-  const pending = tasks.length - completed;
-
-  const visibleTasks = tasks.filter((task) => {
     const matchesFilter =
-      filter === "All Tasks" ||
-      (filter === "Completed" && task.done) ||
-      (filter === "Pending" && !task.done);
+      filter === "All" ||
+      (filter === "Pending" && !task.completed) ||
+      (filter === "Completed" && task.completed);
 
-    return (
-      matchesFilter &&
-      task.title.toLowerCase().includes(search.toLowerCase())
-    );
+    return matchesSearch && matchesFilter;
   });
 
-  function addTask(e) {
-    e.preventDefault();
+  function addTask(event) {
+    event.preventDefault();
     if (!title.trim()) return;
 
     setTasks((previous) => [
@@ -90,19 +55,21 @@ function App() {
         title: title.trim(),
         category,
         priority,
-        done: false,
+        completed: false,
       },
       ...previous,
     ]);
 
     setTitle("");
+    setCategory("Work");
+    setPriority("Medium");
     setShowForm(false);
   }
 
   function toggleTask(id) {
     setTasks((previous) =>
       previous.map((task) =>
-        task.id === id ? { ...task, done: !task.done } : task
+        task.id === id ? { ...task, completed: !task.completed } : task
       )
     );
   }
@@ -112,37 +79,23 @@ function App() {
   }
 
   return (
-    <div className={`app-shell ${darkMode ? "dark-theme" : ""}`}>
+    <div className="app-shell">
       <aside className="sidebar">
         <a className="brand" href="#home">
           <span className="brand-icon">✓</span>
-          <span>
-            TaskFlow<span className="brand-pro"> Pro</span>
-          </span>
+          <span>TaskFlow <span className="brand-pro">Pro</span></span>
         </a>
 
         <p className="nav-heading">WORKSPACE</p>
 
         <nav className="navigation">
-          <button
-            className={filter === "All Tasks" ? "nav-item active" : "nav-item"}
-            onClick={() => setFilter("All Tasks")}
-          >
-            <span>▦</span> All Tasks
-            <span className="nav-count">{tasks.length}</span>
+          <button className={`nav-item ${filter === "All" ? "active" : ""}`} onClick={() => setFilter("All")}>
+            <span>▦</span> All Tasks <span className="nav-count">{tasks.length}</span>
           </button>
-
-          <button
-            className={filter === "Pending" ? "nav-item active" : "nav-item"}
-            onClick={() => setFilter("Pending")}
-          >
+          <button className={`nav-item ${filter === "Pending" ? "active" : ""}`} onClick={() => setFilter("Pending")}>
             <span>◷</span> Pending
           </button>
-
-          <button
-            className={filter === "Completed" ? "nav-item active" : "nav-item"}
-            onClick={() => setFilter("Completed")}
-          >
+          <button className={`nav-item ${filter === "Completed" ? "active" : ""}`} onClick={() => setFilter("Completed")}>
             <span>✓</span> Completed
           </button>
         </nav>
@@ -153,12 +106,11 @@ function App() {
             <h3>Stay productive!</h3>
             <p>Small steps every day lead to big results.</p>
           </div>
-
           <div className="profile">
             <div className="avatar">P</div>
             <div>
-              <strong>My Workspace</strong>
-              <span>Personal account</span>
+              <strong>Priyanka</strong>
+              <span>Workspace member</span>
             </div>
           </div>
         </div>
@@ -167,130 +119,76 @@ function App() {
       <main className="main-content" id="home">
         <header className="topbar">
           <div>
-            <p className="eyebrow">MY WORKSPACE / TASKS</p>
-            <h1>
-              My Tasks <span className="heading-sparkle">✳</span>
-            </h1>
+            <p className="eyebrow">YOUR PERSONAL WORKSPACE</p>
+            <h1>My Dashboard <span className="heading-sparkle">✦</span></h1>
           </div>
-
           <div className="topbar-actions">
-            <button
-              className="theme-toggle"
-              onClick={() => setDarkMode((previous) => !previous)}
-              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-              title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              <span>{darkMode ? "☀️" : "🌙"}</span>
-              {darkMode ? "Light Mode" : "Dark Mode"}
-            </button>
-
-            <button
-              className="primary-button"
-              onClick={() => setShowForm(!showForm)}
-            >
-              <span>＋</span> Add New Task
+            <button className="primary-button" onClick={() => setShowForm(!showForm)}>
+              + Add New Task
             </button>
           </div>
         </header>
 
         <section className="welcome-banner">
           <div className="welcome-copy">
-            <span className="welcome-label">YOUR PRODUCTIVITY SPACE</span>
-            <h2>Make today count.</h2>
-            <p>
-              Organize your work, focus on what matters, and get things done.
-            </p>
+            <span className="welcome-label">YOUR DAILY OVERVIEW</span>
+            <h2>Make today count! ✨</h2>
+            <p>Stay focused, organize your work, and celebrate every little win.</p>
           </div>
-
-          <div className="banner-art" aria-hidden="true">
+          <div className="banner-art">
             <div className="art-circle">✓</div>
             <div className="art-card card-one">✦ Stay focused</div>
-            <div className="art-card card-two">✓ Task complete</div>
+            <div className="art-card card-two">✓ Progress matters</div>
           </div>
         </section>
 
         <section className="stats-grid">
           <div className="stat-card">
-            <div className="stat-top">
-              <span>Total tasks</span>
-              <span className="stat-icon purple">▦</span>
-            </div>
+            <div className="stat-top">Total Tasks <span className="stat-icon purple">▦</span></div>
             <strong>{tasks.length}</strong>
             <p>Tasks in your workspace</p>
           </div>
-
           <div className="stat-card">
-            <div className="stat-top">
-              <span>In progress</span>
-              <span className="stat-icon orange">◷</span>
-            </div>
-            <strong>{pending}</strong>
-            <p>Still to be completed</p>
+            <div className="stat-top">Pending Tasks <span className="stat-icon orange">◷</span></div>
+            <strong>{pendingCount}</strong>
+            <p>Waiting to be completed</p>
           </div>
-
           <div className="stat-card">
-            <div className="stat-top">
-              <span>Completed</span>
-              <span className="stat-icon green">✓</span>
-            </div>
-            <strong>{completed}</strong>
-            <p>Tasks finished so far</p>
+            <div className="stat-top">Completed Tasks <span className="stat-icon green">✓</span></div>
+            <strong>{completedCount}</strong>
+            <p>Great job making progress!</p>
           </div>
         </section>
 
         {showForm && (
           <form className="task-form" onSubmit={addTask}>
-            <h2>Create a new task</h2>
-
+            <h2>Create a New Task</h2>
             <label>
-              Task name
-              <input
-                autoFocus
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="What do you need to do?"
-                required
-              />
+              Task title
+              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What do you need to do?" required />
             </label>
-
             <div className="form-row">
               <label>
                 Category
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                >
-                  <option>Development</option>
+                <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                  <option>Work</option>
                   <option>Learning</option>
-                  <option>Planning</option>
                   <option>Personal</option>
+                  <option>Projects</option>
                 </select>
               </label>
-
               <label>
                 Priority
-                <select
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value)}
-                >
-                  <option>Low</option>
-                  <option>Medium</option>
+                <select value={priority} onChange={(e) => setPriority(e.target.value)}>
                   <option>High</option>
+                  <option>Medium</option>
+                  <option>Low</option>
                 </select>
               </label>
             </div>
-
             <div className="form-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setShowForm(false)}
-              >
-                Cancel
-              </button>
-              <button type="submit" className="primary-button">
-                Save Task
-              </button>
+              <button type="button" className="secondary-button" onClick={() => setShowForm(false)}>Cancel</button>
+              <button type="submit" className="primary-button">Save Task</button>
             </div>
           </form>
         )}
@@ -298,30 +196,20 @@ function App() {
         <section className="tasks-section">
           <div className="section-heading">
             <div>
-              <h2>Task overview</h2>
-              <p>Keep track of everything you need to do.</p>
+              <h2>My Tasks</h2>
+              <p>Organize your day, one task at a time.</p>
             </div>
-            <span className="task-total">{visibleTasks.length} tasks</span>
+            <span className="task-total">{filteredTasks.length} tasks</span>
           </div>
 
           <div className="toolbar">
             <div className="search-box">
               <span>⌕</span>
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search your tasks..."
-                aria-label="Search tasks"
-              />
+              <input type="search" placeholder="Search tasks..." value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
-
             <div className="filter-tabs">
-              {["All Tasks", "Pending", "Completed"].map((item) => (
-                <button
-                  key={item}
-                  className={filter === item ? "filter-tab selected" : "filter-tab"}
-                  onClick={() => setFilter(item)}
-                >
+              {["All", "Pending", "Completed"].map((item) => (
+                <button key={item} className={`filter-tab ${filter === item ? "selected" : ""}`} onClick={() => setFilter(item)}>
                   {item}
                 </button>
               ))}
@@ -329,64 +217,29 @@ function App() {
           </div>
 
           <div className="task-list">
-            {visibleTasks.map((task) => (
-              <article
-                className={task.done ? "task-row task-done" : "task-row"}
-                key={task.id}
-              >
-                <button
-                  className={task.done ? "task-check checked" : "task-check"}
-                  onClick={() => toggleTask(task.id)}
-                  aria-label={
-                    task.done ? "Mark task pending" : "Mark task completed"
-                  }
-                >
-                  {task.done ? "✓" : ""}
+            {filteredTasks.map((task) => (
+              <article key={task.id} className={`task-row ${task.completed ? "task-done" : ""}`}>
+                <button className={`task-check ${task.completed ? "checked" : ""}`} onClick={() => toggleTask(task.id)} aria-label="Toggle task completion">
+                  {task.completed ? "✓" : ""}
                 </button>
-
                 <div className="task-info">
                   <h3>{task.title}</h3>
                   <span className="task-category">{task.category}</span>
                 </div>
-
-                <span
-                  className={`priority priority-${task.priority.toLowerCase()}`}
-                >
-                  {task.priority}
+                <span className={`priority priority-${task.priority.toLowerCase()}`}>{task.priority}</span>
+                <span className={`status ${task.completed ? "status-completed" : "status-pending"}`}>
+                  {task.completed ? "Completed" : "Pending"}
                 </span>
-
-                <span
-                  className={
-                    task.done
-                      ? "status status-completed"
-                      : "status status-pending"
-                  }
-                >
-                  {task.done ? "Completed" : "Pending"}
-                </span>
-
-                <button
-                  className="delete-button"
-                  onClick={() => deleteTask(task.id)}
-                  aria-label={`Delete ${task.title}`}
-                  title="Delete task"
-                >
-                  ×
-                </button>
+                <button className="delete-button" onClick={() => deleteTask(task.id)} aria-label={`Delete ${task.title}`} title="Delete task">×</button>
               </article>
             ))}
 
-            {visibleTasks.length === 0 && (
+            {filteredTasks.length === 0 && (
               <div className="empty-state">
                 <span>✦</span>
                 <h3>No tasks found</h3>
-                <p>Try another search or add a new task to get started.</p>
-                <button
-                  className="primary-button"
-                  onClick={() => setShowForm(true)}
-                >
-                  ＋ Create a task
-                </button>
+                <p>Try another search or add a new task.</p>
+                <button className="primary-button" onClick={() => setShowForm(true)}>+ Add New Task</button>
               </div>
             )}
           </div>
@@ -394,9 +247,7 @@ function App() {
 
         <footer className="footer">
           <span>© 2026 TaskFlow Pro</span>
-          <span>
-            Plan better. Do better. <b>✦</b>
-          </span>
+          <span>Made with <b>♥</b> for better productivity</span>
         </footer>
       </main>
     </div>
