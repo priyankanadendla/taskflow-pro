@@ -3,9 +3,27 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 const initialTasks = [
-  { id: 1, title: "Complete React project", category: "Development", priority: "High", done: false },
-  { id: 2, title: "Practice Java coding", category: "Learning", priority: "High", done: false },
-  { id: 3, title: "Review project documentation", category: "Planning", priority: "Medium", done: true },
+  {
+    id: 1,
+    title: "Complete React project",
+    category: "Development",
+    priority: "High",
+    done: false,
+  },
+  {
+    id: 2,
+    title: "Practice Java coding",
+    category: "Learning",
+    priority: "High",
+    done: false,
+  },
+  {
+    id: 3,
+    title: "Review project documentation",
+    category: "Planning",
+    priority: "Medium",
+    done: true,
+  },
 ];
 
 function App() {
@@ -15,6 +33,14 @@ function App() {
       return saved ? JSON.parse(saved) : initialTasks;
     } catch {
       return initialTasks;
+    }
+  });
+
+  const [darkMode, setDarkMode] = useState(() => {
+    try {
+      return localStorage.getItem("taskflow-theme") === "dark";
+    } catch {
+      return false;
     }
   });
 
@@ -28,6 +54,16 @@ function App() {
   useEffect(() => {
     localStorage.setItem("taskflow-tasks", JSON.stringify(tasks));
   }, [tasks]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = darkMode ? "dark" : "light";
+
+    try {
+      localStorage.setItem("taskflow-theme", darkMode ? "dark" : "light");
+    } catch {
+      // The theme still works if browser storage is unavailable.
+    }
+  }, [darkMode]);
 
   const completed = tasks.filter((task) => task.done).length;
   const pending = tasks.length - completed;
@@ -76,11 +112,13 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${darkMode ? "dark-theme" : ""}`}>
       <aside className="sidebar">
         <a className="brand" href="#home">
           <span className="brand-icon">✓</span>
-          <span>TaskFlow<span className="brand-pro"> Pro</span></span>
+          <span>
+            TaskFlow<span className="brand-pro"> Pro</span>
+          </span>
         </a>
 
         <p className="nav-heading">WORKSPACE</p>
@@ -115,6 +153,7 @@ function App() {
             <h3>Stay productive!</h3>
             <p>Small steps every day lead to big results.</p>
           </div>
+
           <div className="profile">
             <div className="avatar">P</div>
             <div>
@@ -129,19 +168,40 @@ function App() {
         <header className="topbar">
           <div>
             <p className="eyebrow">MY WORKSPACE / TASKS</p>
-            <h1>My Tasks <span className="heading-sparkle">✳</span></h1>
+            <h1>
+              My Tasks <span className="heading-sparkle">✳</span>
+            </h1>
           </div>
-          <button className="primary-button" onClick={() => setShowForm(!showForm)}>
-            <span>＋</span> Add New Task
-          </button>
+
+          <div className="topbar-actions">
+            <button
+              className="theme-toggle"
+              onClick={() => setDarkMode((previous) => !previous)}
+              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+              title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              <span>{darkMode ? "☀️" : "🌙"}</span>
+              {darkMode ? "Light Mode" : "Dark Mode"}
+            </button>
+
+            <button
+              className="primary-button"
+              onClick={() => setShowForm(!showForm)}
+            >
+              <span>＋</span> Add New Task
+            </button>
+          </div>
         </header>
 
         <section className="welcome-banner">
           <div className="welcome-copy">
             <span className="welcome-label">YOUR PRODUCTIVITY SPACE</span>
             <h2>Make today count.</h2>
-            <p>Organize your work, focus on what matters, and get things done.</p>
+            <p>
+              Organize your work, focus on what matters, and get things done.
+            </p>
           </div>
+
           <div className="banner-art" aria-hidden="true">
             <div className="art-circle">✓</div>
             <div className="art-card card-one">✦ Stay focused</div>
@@ -181,6 +241,7 @@ function App() {
         {showForm && (
           <form className="task-form" onSubmit={addTask}>
             <h2>Create a new task</h2>
+
             <label>
               Task name
               <input
@@ -195,16 +256,23 @@ function App() {
             <div className="form-row">
               <label>
                 Category
-                <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                >
                   <option>Development</option>
                   <option>Learning</option>
                   <option>Planning</option>
                   <option>Personal</option>
                 </select>
               </label>
+
               <label>
                 Priority
-                <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+                <select
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value)}
+                >
                   <option>Low</option>
                   <option>Medium</option>
                   <option>High</option>
@@ -213,10 +281,16 @@ function App() {
             </div>
 
             <div className="form-actions">
-              <button type="button" className="secondary-button" onClick={() => setShowForm(false)}>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setShowForm(false)}
+              >
                 Cancel
               </button>
-              <button type="submit" className="primary-button">Save Task</button>
+              <button type="submit" className="primary-button">
+                Save Task
+              </button>
             </div>
           </form>
         )}
@@ -240,6 +314,7 @@ function App() {
                 aria-label="Search tasks"
               />
             </div>
+
             <div className="filter-tabs">
               {["All Tasks", "Pending", "Completed"].map((item) => (
                 <button
@@ -255,11 +330,16 @@ function App() {
 
           <div className="task-list">
             {visibleTasks.map((task) => (
-              <article className={task.done ? "task-row task-done" : "task-row"} key={task.id}>
+              <article
+                className={task.done ? "task-row task-done" : "task-row"}
+                key={task.id}
+              >
                 <button
                   className={task.done ? "task-check checked" : "task-check"}
                   onClick={() => toggleTask(task.id)}
-                  aria-label={task.done ? "Mark task pending" : "Mark task completed"}
+                  aria-label={
+                    task.done ? "Mark task pending" : "Mark task completed"
+                  }
                 >
                   {task.done ? "✓" : ""}
                 </button>
@@ -269,11 +349,19 @@ function App() {
                   <span className="task-category">{task.category}</span>
                 </div>
 
-                <span className={`priority priority-${task.priority.toLowerCase()}`}>
+                <span
+                  className={`priority priority-${task.priority.toLowerCase()}`}
+                >
                   {task.priority}
                 </span>
 
-                <span className={task.done ? "status status-completed" : "status status-pending"}>
+                <span
+                  className={
+                    task.done
+                      ? "status status-completed"
+                      : "status status-pending"
+                  }
+                >
                   {task.done ? "Completed" : "Pending"}
                 </span>
 
@@ -293,7 +381,10 @@ function App() {
                 <span>✦</span>
                 <h3>No tasks found</h3>
                 <p>Try another search or add a new task to get started.</p>
-                <button className="primary-button" onClick={() => setShowForm(true)}>
+                <button
+                  className="primary-button"
+                  onClick={() => setShowForm(true)}
+                >
                   ＋ Create a task
                 </button>
               </div>
@@ -303,7 +394,9 @@ function App() {
 
         <footer className="footer">
           <span>© 2026 TaskFlow Pro</span>
-          <span>Plan better. Do better. <b>✦</b></span>
+          <span>
+            Plan better. Do better. <b>✦</b>
+          </span>
         </footer>
       </main>
     </div>
