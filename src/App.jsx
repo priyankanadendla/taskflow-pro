@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 
-const API_URL = "https://taskflow-backend-wllt.onrender.com/api/tasks";
+const API_URL = import.meta.env.VITE_API_URL || "https://taskflow-backend-wllt.onrender.com/api/tasks";
 
 function App() {
   const [tasks, setTasks] = useState([]);
@@ -12,7 +12,9 @@ function App() {
   const [category, setCategory] = useState("Work");
   const [priority, setPriority] = useState("Medium");
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     async function fetchTasks() {
@@ -20,15 +22,16 @@ function App() {
         const response = await fetch(API_URL);
 
         if (!response.ok) {
-          throw new Error("Failed to fetch tasks");
+          throw new Error(`Failed to fetch tasks (HTTP ${response.status})`);
         }
 
         const data = await response.json();
-        setTasks(data);
+        setTasks(Array.isArray(data) ? data : []);
         setError("");
       } catch (err) {
+        console.error("Backend fetch error:", err);
         setError(
-          "Backend connection failed. Please start Spring Boot."
+          "Backend connection failed. Please ensure the backend service is running."
         );
       } finally {
         setLoading(false);
@@ -68,6 +71,10 @@ function App() {
       return;
     }
 
+    setIsSaving(true);
+    setError("");
+    setSuccessMessage("");
+
     try {
       const response = await fetch(API_URL, {
         method: "POST",
@@ -84,7 +91,16 @@ function App() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save task");
+        let errorMsg = `Task save failed (HTTP ${response.status})`;
+        try {
+          const errData = await response.json();
+          if (errData.message) {
+            errorMsg = errData.message;
+          }
+        } catch {
+          // Response was not JSON
+        }
+        throw new Error(errorMsg);
       }
 
       const savedTask = await response.json();
@@ -94,9 +110,13 @@ function App() {
       setCategory("Work");
       setPriority("Medium");
       setShowForm(false);
-      setError("");
+      setSuccessMessage("Task saved successfully!");
+      setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err) {
-      setError("Task save failed. Please check the backend.");
+      console.error("Task save failed:", err);
+      setError(err.message || "Task save failed. Please check the backend.");
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -122,7 +142,7 @@ function App() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update task");
+        throw new Error(`Failed to update task (HTTP ${response.status})`);
       }
 
       const savedTask = await response.json();
@@ -135,6 +155,7 @@ function App() {
 
       setError("");
     } catch (err) {
+      console.error("Task update failed:", err);
       setError("Task update failed. Please check the backend.");
     }
   }
@@ -146,7 +167,7 @@ function App() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete task");
+        throw new Error(`Failed to delete task (HTTP ${response.status})`);
       }
 
       setTasks((previous) =>
@@ -154,7 +175,10 @@ function App() {
       );
 
       setError("");
+      setSuccessMessage("Task deleted successfully!");
+      setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err) {
+      console.error("Task deletion failed:", err);
       setError("Task deletion failed. Please check the backend.");
     }
   }
@@ -298,11 +322,35 @@ function App() {
           <p
             role="alert"
             style={{
-              color: "red",
+              color: "#d85d65",
+              background: "#fff0f0",
+              padding: "11px 16px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: 600,
               margin: "16px 0",
+              border: "1px solid #ffd5d8"
             }}
           >
             {error}
+          </p>
+        )}
+
+        {successMessage && (
+          <p
+            role="status"
+            style={{
+              color: "#2d9b63",
+              background: "#e2f8ed",
+              padding: "11px 16px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: 600,
+              margin: "16px 0",
+              border: "1px solid #c0ebd2"
+            }}
+          >
+            {successMessage}
           </p>
         )}
 
@@ -319,6 +367,7 @@ function App() {
                 }
                 placeholder="What do you need to do?"
                 required
+                disabled={isSaving}
               />
             </label>
 
@@ -330,6 +379,7 @@ function App() {
                   onChange={(event) =>
                     setCategory(event.target.value)
                   }
+                  disabled={isSaving}
                 >
                   <option>Work</option>
                   <option>Learning</option>
@@ -345,6 +395,7 @@ function App() {
                   onChange={(event) =>
                     setPriority(event.target.value)
                   }
+                  disabled={isSaving}
                 >
                   <option>High</option>
                   <option>Medium</option>
@@ -358,6 +409,7 @@ function App() {
                 type="button"
                 className="secondary-button"
                 onClick={() => setShowForm(false)}
+                disabled={isSaving}
               >
                 Cancel
               </button>
@@ -365,8 +417,9 @@ function App() {
               <button
                 type="submit"
                 className="primary-button"
+                disabled={isSaving}
               >
-                Save Task
+                {isSaving ? "Saving..." : "Save Task"}
               </button>
             </div>
           </form>
